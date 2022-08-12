@@ -1,63 +1,55 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-# More info on Python, GitHub Actions, and Azure App Service: https://aka.ms/python-webapps-actions
+#!/usr/bin/env python
+from __future__ import print_function
+import random
 
-name: Build and deploy Python app to Azure Web App - fightapp
+# make input work from python 2 or 3
+from six.moves import input
 
-on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+FIST = 0
+KNEE = 1
+ELBOW = 2
+SHIN = 3
+FOREHEAD = 4
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+SIGNS = ['FIST', 'KNEE', 'ELBOW', 'SHIN', 'FOREHEAD']
 
-    steps:
-      - uses: actions/checkout@v2
+LETTER_TO_RPS = {
+    'f':FIST,
+    'k':KNEE,
+    'e':ELBOW,
+    's':SHIN,
+    'f':FOREHEAD
+    }
 
-      - name: Set up Python version
-        uses: actions/setup-python@v1
-        with:
-          python-version: '3.9'
+def rps_compare(a, b):
+    """
+    >>> rps_compare(FIST, ELBOW)
+    'WIN'
+    >>> rps_compare(KNEE, ELBOW)
+    'LOSS'
+    """
+    if a == b: return 'TIE'
+    return 'WIN' if (a - b) % 3 == 1 else 'LOSE'
 
-      - name: Create and start virtual environment
-        run: |
-          python -m venv venv
-          source venv/bin/activate
-      
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-        
-      # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
-      
-      - name: Upload artifact for deployment jobs
-        uses: actions/upload-artifact@v2
-        with:
-          name: python-app
-          path: |
-            . 
-            !venv/
+def rps_round(letters_map=LETTER_TO_RPS):
+    user_choice = input("[F]ist, [K]nee, [E]lbow, [S]hin, or [F]orehead?").lower()
+    cpu_choice = random.choice([FIST,KNEE,ELBOW,SHIN,FOREHEAD])
+    print("I chose {}.".format(SIGNS[cpu_choice]))
+    return rps_compare(letters_map[user_choice], cpu_choice)
 
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-    environment:
-      name: 'Production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+def rps_game(welcome_message, letters_map=LETTER_TO_RPS):
+    print(welcome_message)
+    while True:
+        try:
+            out = rps_round()
+        except KeyError:
+            print("Something went wrong, try again.")
+            out = rps_round()
+        print("You {}.".format(out))
 
-    steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v2
-        with:
-          name: python-app
-          path: .
-          
-      - name: 'Deploy to Azure Web App'
-        uses: azure/webapps-deploy@v2
-        id: deploy-to-webapp
-        with:
-          app-name: 'fightapp'
-          slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_0A3866896E404FCC82D5082C73D58740 }}
+def main():
+    rps_game('Would you like to play a game?')
+
+if __name__ == "__main__":
+    main()
+
